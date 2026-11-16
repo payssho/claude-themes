@@ -77,7 +77,8 @@ def main() -> None:
         # 3. Pixel art: a small palette with no dithering, then crisp blocks.
         small = Image.open(shot).convert("RGB").crop((0, 0, *SMALL))
         small = small.quantize(colors=COLOURS, method=Image.Quantize.FASTOCTREE, dither=Image.Dither.NONE)
-        big = small.resize((SMALL[0] * SCALE, SMALL[1] * SCALE), Image.Resampling.NEAREST)
+        # Saved as plain RGB: the app does not draw palette (indexed) PNGs.
+        big = small.resize((SMALL[0] * SCALE, SMALL[1] * SCALE), Image.Resampling.NEAREST).convert("RGB")
         OUT.parent.mkdir(parents=True, exist_ok=True)
         big.save(OUT, optimize=True)
 
