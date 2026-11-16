@@ -5,9 +5,9 @@ import { SCENE } from './scene.js'
 
 const SCENE_NAME = 'night-city'
 
-// The city is a still SVG with a few stepped lights on top, drawn by the
-// ui.render hook below. It is drawn interactive, the one way the app runs
-// an SVG's animations.
+// The city is a still SVG, drawn by the ui.render hook below as a plain
+// picture: nothing runs once it is shown. (The app stops a background's
+// animations after a moment, so the lights in tools/build.py are off.)
 const LOOK: ThemeSetArgs = {
   colors: theme,
   backdrop: {
@@ -66,7 +66,6 @@ export const register: Register = on => {
       <Svg
         source={SCENE}
         alt="A tiny pixel-art cyberpunk city at night seen from above: neon towers, shops, cafés, parks and two elevated metro lines."
-        isInteractive
       />
     )
   })

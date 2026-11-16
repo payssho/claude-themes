@@ -4,9 +4,9 @@ The city is written straight as an SVG on a 480 x 300 pixel grid, one unit
 per pixel: isometric blocks with window patterns laid on their faces, neon
 outlines with a soft glow. A mosaic filter then samples the whole picture
 once per unit, so everything comes out as crisp square pixels, with 2:1
-stair-stepped edges, when the app scales it up. A few lights on top of it
-(signs, storefronts, windows, beacons, billboards, fountains) change in
-steps; they sit outside the mosaic so it is never worked out again.
+stair-stepped edges, when the app scales it up. Lights that change in steps
+(signs, storefronts, windows, beacons, billboards, fountains) can be laid on
+top with ANIMATE; they are off, as the app stops a background's animations.
 
 Each kind of building is drawn once, as a model, and placed with <use>, so
 the whole city fits under the 131,072 characters the app takes for a scene
@@ -250,6 +250,11 @@ def metro(J, i_from, i_to, train_at):
 
 DELAYS = 8
 
+# Off: the app stops a background's animations after a moment, so the lights
+# stay still anyway, and a still picture is the lightest. Turn it on to try
+# again once the app runs them.
+ANIMATE = False
+
 
 def face_point(origin, x, y, slope):
     """A point (x, y) in a face's flat coordinates, as a pixel."""
@@ -425,7 +430,7 @@ def svg():
     colours += "".join(
         f".k{k}{{--f:{FACADES[k]};--g:{GLOWS[k]};--n:{NEON[(k + 1) % len(NEON)]}}}" for k in range(len(FACADES))
     )
-    style = "path{fill:none;stroke-width:1}" + colours + LIGHT_STYLE
+    style = "path{fill:none;stroke-width:1}" + colours + (LIGHT_STYLE if ANIMATE else "")
     defs = (
         # Mosaic: keep the centre of every unit square, then grow it back to fill the square.
         f'<filter id="px" filterUnits="userSpaceOnUse" primitiveUnits="userSpaceOnUse" x="0" y="0" width="{W}" height="{H}">'
@@ -444,7 +449,7 @@ def svg():
     return (
         f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {W} {H}" preserveAspectRatio="xMidYMid slice">'
         f"<style>{style}</style><defs>{defs}</defs>"
-        '<g filter="url(#px)" style="will-change:transform">'
+        '<g filter="url(#px)">'
         f'<rect width="{W}" height="{H}" fill="{PAVEMENT}"/>'
         f'<g shape-rendering="crispEdges">{"".join(out)}</g>'
         f'<g filter="url(#gl)" opacity=".6" style="mix-blend-mode:screen">{"".join(glow)}</g>'
@@ -452,8 +457,8 @@ def svg():
         '<ellipse cx="460" cy="20" rx="180" ry="150" fill="url(#hc)" style="mix-blend-mode:screen"/>'
         f'<rect width="{W}" height="70" fill="url(#top)"/>'
         "</g>"
-        f'<g id="lights">{"".join(lights)}</g>'
-        "</svg>"
+        + (f'<g id="lights">{"".join(lights)}</g>' if ANIMATE else "")
+        + "</svg>"
     )
 
 
