@@ -7,8 +7,8 @@ dark, where the conversation sits; the detail lives on the left and right
 edges, which stay visible. The interface gets a matching indigo palette with
 magenta, cyan and yellow neon.
 
-The background is a single still picture (2560 × 1600, about 300 KB), so the
-app has nothing to animate or redraw: it costs nothing in performance.
+The background is completely still, drawn by the app as a plain picture, so
+it has nothing to animate or redraw: it costs nothing in performance.
 
 ![The night city](assets/night-city.png)
 
@@ -43,19 +43,22 @@ background.
 
 ## Change the city
 
-The city is generated, then turned into pixel art:
+The city is generated:
 
 - `tools/scene.js` draws it as an SVG (layout, buildings, colours, metros).
-- `tools/render.py` screenshots it at 1280 × 800 with a headless Edge or
-  Chrome, reduces it to a 128-colour palette without dithering and scales
-  every pixel up into a 2 × 2 block.
+- `tools/export-svg.mjs` freezes it (no animation, crisp pixel edges) into
+  `hooks/scene.js`, which the plugin hands to the app as the background.
+- `tools/render.py` turns the same SVG into `assets/night-city.png`, the
+  pixel-art preview at the top of this page.
+
+From the top of the repository:
 
 ```bash
+node night-theme/tools/export-svg.mjs night-theme/hooks/scene.js
 pip install pillow
 python night-theme/tools/render.py
 ```
 
-Run it from the top of the repository. It rewrites
-`night-theme/assets/night-city.png`. Run `/reload-plugins` to see it.
+Then run `/reload-plugins` and `/night-theme` to see it.
 
 The interface colours are in `hooks/palette.js`.

@@ -1,11 +1,19 @@
 import type { EngineInterface, Register, ThemeSetArgs } from 'claude-code'
 
 import { problems, theme } from './palette.js'
+import { SCENE } from './scene.js'
 
-// A still pixel-art picture: the app draws it once and has nothing to animate.
+const SCENE_NAME = 'night-city'
+
+// The city is a still SVG, drawn by the ui.render hook below as a plain
+// picture: no animation runs, so it costs nothing once drawn.
 const LOOK: ThemeSetArgs = {
   colors: theme,
-  backdrop: { image: { source: 'assets/night-city.png' } },
+  backdrop: {
+    scene: SCENE_NAME,
+    // Panels frosted in the theme's own indigo, so the city glows through softly.
+    glass: { blur: 18, tint: '#14112a', opacity: 0.62 },
+  },
 }
 
 // Remembered across sessions, so the theme comes back on its own once chosen.
@@ -45,5 +53,19 @@ export const register: Register = on => {
     await $.store.set(ENABLED, true)
 
     return { text: await turnOn($) }
+  })
+
+  on('ui.render', { component: 'Backdrop' }, ($, e, next) => {
+    if ((e.surface !== 'desktop' && e.surface !== 'mobile') || e.props.scene !== SCENE_NAME) {
+      return next(e)
+    }
+    const { Svg } = $.ui.resolve(e)
+
+    return (
+      <Svg
+        source={SCENE}
+        alt="A tiny pixel-art cyberpunk city at night seen from above: neon towers, shops, cafés, parks and two elevated metro lines."
+      />
+    )
   })
 }
