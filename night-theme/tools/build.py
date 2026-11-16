@@ -267,8 +267,9 @@ def light(points, fill, kind):
 def shop_lights(i0, j0, h, facade):
     x, y = at(i0, j0)
     left = (x + Q(0.25, 1.75, h)[0], y + Q(0.25, 1.75, h)[1])
-    out = light(face_band(left, 2, 7, -4, -1, 0.5), facade, "fl")  # the sign flickers
-    out += light(face_band(left, 1, 11, h - 4, h - 1, 0.5), "#000", "br")  # the storefront breathes
+    out = light(face_band(left, 2, 7, -4, -1, 0.5), facade, "fl") if rnd.random() < 0.5 else ""  # one sign in two flickers
+    if rnd.random() < 0.5:  # one storefront in two breathes
+        out += light(face_band(left, 1, 11, h - 4, h - 1, 0.5), "#000", "br")
     return out
 
 
@@ -276,10 +277,10 @@ def tower_lights(i0, j0, h, palette):
     x, y = at(i0, j0)
     left = (x + Q(0.25, 1.75, h)[0], y + Q(0.25, 1.75, h)[1])
     out = ""
-    for _ in range(1):  # a window that switches on and off
+    for _ in range(1 if rnd.random() < 0.5 else 0):  # one tower in two: a window switches
         wx, wy = rnd.choice([2, 4, 6, 8]), 3 * rnd.randrange(1, max(2, (h - 6) // 3))
         out += light(face_band(left, wx, wx + 1, wy, wy + 2, 0.5), rnd.choice(WINDOWS[palette]), "wn")
-    if h >= 40:  # the beacon blinks
+    if h >= 40 and rnd.random() < 0.5:  # one beacon in two blinks
         ax, ay = Q(1.3, 1.2, h)
         out += light([(x + ax, y + ay - 8), (x + ax + 1, y + ay - 8), (x + ax + 1, y + ay - 7), (x + ax, y + ay - 7)], "#1f1c44", "bk")
     return out
@@ -443,7 +444,7 @@ def svg():
     return (
         f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {W} {H}" preserveAspectRatio="xMidYMid slice">'
         f"<style>{style}</style><defs>{defs}</defs>"
-        '<g filter="url(#px)">'
+        '<g filter="url(#px)" style="will-change:transform">'
         f'<rect width="{W}" height="{H}" fill="{PAVEMENT}"/>'
         f'<g shape-rendering="crispEdges">{"".join(out)}</g>'
         f'<g filter="url(#gl)" opacity=".6" style="mix-blend-mode:screen">{"".join(glow)}</g>'
