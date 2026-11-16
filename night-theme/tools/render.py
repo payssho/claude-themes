@@ -6,7 +6,7 @@ colours reduced to a small palette, no dithering, and every pixel scaled up
 as a crisp block. The result is a still PNG, so the app has nothing to
 animate or redraw: no cost to performance.
 
-    python tools/render.py
+    python night-theme/tools/render.py
 
 Needs Node, Pillow (pip install pillow) and Edge or Chrome. Writes
 assets/night-city.png (at most 1 MiB and 4096 px a side, the app's limits).
@@ -45,7 +45,7 @@ def browser() -> str:
     for candidate in BROWSERS:
         if os.path.isfile(candidate) or shutil.which(candidate):
             return candidate
-    sys.exit("No Edge or Chrome found: add its path to BROWSERS in tools/render.py.")
+    sys.exit("No Edge or Chrome found: add its path to BROWSERS in render.py.")
 
 
 def main() -> None:

@@ -1,6 +1,12 @@
 {
-  "name": "claude-night-theme",
+  "name": "claude-themes",
   "owner": { "name": "payssho" },
-  "description": "A pixel-art neon night city theme for the Claude app.",
-  "plugins": [{ "name": "night-theme", "source": "./" }]
+  "description": "Backgrounds and colour themes for the Claude app.",
+  "plugins": [
+    {
+      "name": "night-theme",
+      "source": "./night-theme",
+      "description": "A pixel-art cyberpunk city at night, with a neon indigo palette. /night-theme"
+    }
+  ]
 }
