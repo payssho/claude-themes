@@ -43,15 +43,19 @@ background.
 
 ## Change the city
 
-`tools/build.py` draws the city pixel by pixel on a 480 × 300 canvas
-(isometric blocks, one-pixel windows, one-pixel neon outlines), then writes:
+`tools/build.py` writes the city as an SVG on a 480 × 300 pixel grid, one
+unit per pixel: isometric blocks with window patterns on their faces, neon
+outlines with a soft glow. A mosaic filter samples it once per unit, so
+everything comes out as crisp square pixels with stair-stepped edges. Each
+kind of building is drawn once and reused, so the scene stays small.
 
-- `hooks/scene.js`: the picture inside a tiny SVG that the app scales up with
-  crisp, unsmoothed pixels. This is the background the plugin shows.
-- `assets/night-city.png`: a 4× preview, the picture at the top of this page.
+It writes:
+
+- `hooks/scene.js`: the scene the plugin shows as the background.
+- `assets/night-city.png`: a preview, the picture at the top of this page
+  (made with a headless Edge or Chrome when one is found).
 
 ```bash
-pip install pillow
 python night-theme/tools/build.py
 ```
 
