@@ -7,8 +7,10 @@ dark, where the conversation sits; the detail lives on the left and right
 edges, which stay visible. The interface gets a matching indigo palette with
 magenta, cyan and yellow neon.
 
-The background is completely still, drawn by the app as a plain picture, so
-it has nothing to animate or redraw: it costs nothing in performance.
+The lights live: shop signs flicker, storefronts breathe, windows switch on
+and off, beacons blink, billboards change colour and fountains pulse. They
+change in steps, like pixel art, and sit on top of a still city, so the app
+only redraws a few small shapes now and then.
 
 ![The night city](assets/night-city.png)
 

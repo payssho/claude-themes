@@ -4,7 +4,9 @@ The city is written straight as an SVG on a 480 x 300 pixel grid, one unit
 per pixel: isometric blocks with window patterns laid on their faces, neon
 outlines with a soft glow. A mosaic filter then samples the whole picture
 once per unit, so everything comes out as crisp square pixels, with 2:1
-stair-stepped edges, when the app scales it up.
+stair-stepped edges, when the app scales it up. A few lights on top of it
+(signs, storefronts, windows, beacons, billboards, fountains) change in
+steps; they sit outside the mosaic so it is never worked out again.
 
 Each kind of building is drawn once, as a model, and placed with <use>, so
 the whole city fits under the 131,072 characters the app takes for a scene
@@ -239,6 +241,80 @@ def metro(J, i_from, i_to, train_at):
     return out, glow
 
 
+# ---------- lights ----------
+# The lights that move sit on top of the city, outside the mosaic, so the
+# filter never runs again. Each is a small pixel shape over a light the city
+# already shows: a dark one that dims or cuts it, or a lit one that switches
+# a window on. They change in steps, like pixel art, so the picture is only
+# redrawn when one changes.
+
+DELAYS = 8
+
+
+def face_point(origin, x, y, slope):
+    """A point (x, y) in a face's flat coordinates, as a pixel."""
+    return (origin[0] + x, round(origin[1] + slope * x + y))
+
+
+def face_band(origin, x0, x1, y0, y1, slope):
+    return [face_point(origin, x0, y0, slope), face_point(origin, x1, y0, slope), face_point(origin, x1, y1, slope), face_point(origin, x0, y1, slope)]
+
+
+def light(points, fill, kind):
+    return f'<path class="{kind} d{rnd.randrange(DELAYS)}" style="fill:{fill}" d="M{pts(points)}z"/>'
+
+
+def shop_lights(i0, j0, h, facade):
+    x, y = at(i0, j0)
+    left = (x + Q(0.25, 1.75, h)[0], y + Q(0.25, 1.75, h)[1])
+    out = light(face_band(left, 2, 7, -4, -1, 0.5), facade, "fl")  # the sign flickers
+    out += light(face_band(left, 1, 11, h - 4, h - 1, 0.5), "#000", "br")  # the storefront breathes
+    return out
+
+
+def tower_lights(i0, j0, h, palette):
+    x, y = at(i0, j0)
+    left = (x + Q(0.25, 1.75, h)[0], y + Q(0.25, 1.75, h)[1])
+    out = ""
+    for _ in range(1):  # a window that switches on and off
+        wx, wy = rnd.choice([2, 4, 6, 8]), 3 * rnd.randrange(1, max(2, (h - 6) // 3))
+        out += light(face_band(left, wx, wx + 1, wy, wy + 2, 0.5), rnd.choice(WINDOWS[palette]), "wn")
+    if h >= 40:  # the beacon blinks
+        ax, ay = Q(1.3, 1.2, h)
+        out += light([(x + ax, y + ay - 8), (x + ax + 1, y + ay - 8), (x + ax + 1, y + ay - 7), (x + ax, y + ay - 7)], "#1f1c44", "bk")
+    return out
+
+
+def board_lights(i0, j0, h):
+    x, y = at(i0, j0)
+    origin = (x + Q(0.25, 1.75, h)[0], y + Q(0.25, 1.75, h)[1])
+    return light(face_band(origin, 1, 11, 3, 7, 0.5), NEON[0], "bb")
+
+
+def fountain_lights(i0, j0):
+    x, y = at(i0, j0)
+    corners = [Q(0.8, 0.8, 2), Q(1.2, 0.8, 2), Q(1.2, 1.2, 2), Q(0.8, 1.2, 2)]
+    return light([(x + cx, y + cy) for cx, cy in corners], "#0c0a1f", "fo")
+
+
+LIGHT_STYLE = (
+    "#lights path{shape-rendering:crispEdges}"
+    ".fl{opacity:0;animation:fl 5s steps(1) infinite}"
+    "@keyframes fl{0%,86%,90%,94%,100%{opacity:0}88%,92%{opacity:.85}}"
+    ".br{opacity:0;animation:br 6s steps(3) infinite alternate}"
+    "@keyframes br{to{opacity:.45}}"
+    ".wn{opacity:0;animation:wn 17s steps(1) infinite}"
+    "@keyframes wn{0%,45%{opacity:0}46%,100%{opacity:1}}"
+    ".bk{opacity:0;animation:bk 1.6s steps(1) infinite}"
+    "@keyframes bk{50%,100%{opacity:.9}}"
+    ".bb{animation:bb 8s steps(1) infinite}"
+    "@keyframes bb{0%{fill:#2de2ff}25%{fill:#ff3ea5}50%{fill:#ffd23f}75%{fill:#9b6bff}}"
+    ".fo{opacity:0;animation:fo 3s steps(3) infinite alternate}"
+    "@keyframes fo{to{opacity:.6}}"
+    + "".join(f".d{k}{{animation-delay:-{k * 1.9:.1f}s}}" for k in range(DELAYS))
+    + "@media (prefers-reduced-motion:reduce){#lights path{animation:none}}"
+)
+
 # ---------- city ----------
 
 
@@ -260,7 +336,7 @@ def use(href, i, j, cls=""):
 
 
 def city():
-    out, glow = [], []
+    out, glow, lights = [], [], []
 
     # Roads, with dashed lane lines.
     roads, lanes = [], []
@@ -312,20 +388,25 @@ def city():
                     out.append(use("cafe", i0, j0, f"n{rnd.randrange(len(NEON))}"))
                 else:
                     h = rnd.choice(SHOP_HEIGHTS)
-                    k = f"k{rnd.randrange(len(FACADES))}"
+                    kk = rnd.randrange(len(FACADES))
+                    k = f"k{kk}"
                     out.append(use(f"s{h}", i0, j0, k))
                     glow.append(use(f"g{h}", i0, j0, k))
+                    lights.append(shop_lights(i0, j0, h, FACADES[kk]))
             elif r < 0.5:
                 out.append(use("park", i0, j0))
             elif r < 0.58:
                 out.append(use("plaza", i0, j0))
+                lights.append(fountain_lights(i0, j0))
                 x, y = at(i0 + 1, j0 + 1)
                 glow.append(f'<ellipse cx="{x}" cy="{y - 2}" rx="4" ry="2" fill="{NEON[0]}"/>')
             elif r < 0.68:
                 continue
             else:
                 h = rnd.choice([16, 20, 28, 28, 40, 52, 64])
-                out.append(use(f"t{h}{rnd.choice(list(WINDOWS))}", i0, j0))
+                palette = rnd.choice(list(WINDOWS))
+                out.append(use(f"t{h}{palette}", i0, j0))
+                lights.append(tower_lights(i0, j0, h, palette))
                 n = f"n{rnd.randrange(len(NEON))}"
                 if rnd.random() < 0.45:
                     out.append(use(f"n{h}", i0, j0, n))
@@ -333,16 +414,17 @@ def city():
                 if h >= 28 and rnd.random() < 0.3:
                     out.append(use(f"b{h}", i0, j0, n))
                     glow.append(use(f"b{h}", i0, j0, n))
-    return out, glow
+                    lights.append(board_lights(i0, j0, h))
+    return out, glow, lights
 
 
 def svg():
-    out, glow = city()
+    out, glow, lights = city()
     colours = "".join(f".n{k}{{--n:{c}}}" for k, c in enumerate(NEON))
     colours += "".join(
         f".k{k}{{--f:{FACADES[k]};--g:{GLOWS[k]};--n:{NEON[(k + 1) % len(NEON)]}}}" for k in range(len(FACADES))
     )
-    style = "path{fill:none;stroke-width:1}" + colours
+    style = "path{fill:none;stroke-width:1}" + colours + LIGHT_STYLE
     defs = (
         # Mosaic: keep the centre of every unit square, then grow it back to fill the square.
         f'<filter id="px" filterUnits="userSpaceOnUse" primitiveUnits="userSpaceOnUse" x="0" y="0" width="{W}" height="{H}">'
@@ -368,7 +450,9 @@ def svg():
         '<ellipse cx="20" cy="285" rx="170" ry="140" fill="url(#hm)" style="mix-blend-mode:screen"/>'
         '<ellipse cx="460" cy="20" rx="180" ry="150" fill="url(#hc)" style="mix-blend-mode:screen"/>'
         f'<rect width="{W}" height="70" fill="url(#top)"/>'
-        "</g></svg>"
+        "</g>"
+        f'<g id="lights">{"".join(lights)}</g>'
+        "</svg>"
     )
 
 
