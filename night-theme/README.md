@@ -43,22 +43,18 @@ background.
 
 ## Change the city
 
-The city is generated:
+`tools/build.py` draws the city pixel by pixel on a 480 × 300 canvas
+(isometric blocks, one-pixel windows, one-pixel neon outlines), then writes:
 
-- `tools/scene.js` draws it as an SVG (layout, buildings, colours, metros).
-- `tools/export-svg.mjs` freezes it (no animation, crisp pixel edges) into
-  `hooks/scene.js`, which the plugin hands to the app as the background.
-- `tools/render.py` turns the same SVG into `assets/night-city.png`, the
-  pixel-art preview at the top of this page.
-
-From the top of the repository:
+- `hooks/scene.js`: the picture inside a tiny SVG that the app scales up with
+  crisp, unsmoothed pixels. This is the background the plugin shows.
+- `assets/night-city.png`: a 4× preview, the picture at the top of this page.
 
 ```bash
-node night-theme/tools/export-svg.mjs night-theme/hooks/scene.js
 pip install pillow
-python night-theme/tools/render.py
+python night-theme/tools/build.py
 ```
 
-Then run `/reload-plugins` and `/night-theme` to see it.
-
-The interface colours are in `hooks/palette.js`.
+Then run `/reload-plugins` and `/night-theme` to see it. The layout, sizes and
+colours are constants at the top of `build.py`; the interface colours are in
+`hooks/palette.js`.
