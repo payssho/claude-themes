@@ -1,0 +1,6 @@
+{
+  "name": "claude-night-theme",
+  "owner": { "name": "payssho" },
+  "description": "A pixel-art neon night city theme for the Claude app.",
+  "plugins": [{ "name": "night-theme", "source": "./" }]
+}
